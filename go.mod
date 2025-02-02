@@ -1,4 +1,4 @@
-module github.com/maximkir777/word_of_wisdom
+module github.com/maximkir777/word-of-wisdom
 
 go 1.23
 
