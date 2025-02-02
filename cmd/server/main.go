@@ -6,11 +6,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/maximkir777/word_of_wisdom/internal/config"
-	"github.com/maximkir777/word_of_wisdom/internal/handler"
-	"github.com/maximkir777/word_of_wisdom/internal/server"
-	"github.com/maximkir777/word_of_wisdom/pkg/pow"
-	"github.com/maximkir777/word_of_wisdom/pkg/wow"
+	"github.com/maximkir777/word-of-wisdom/internal/config"
+	"github.com/maximkir777/word-of-wisdom/internal/handler"
+	"github.com/maximkir777/word-of-wisdom/internal/server"
+	"github.com/maximkir777/word-of-wisdom/pkg/pow"
+	"github.com/maximkir777/word-of-wisdom/pkg/wow"
 )
 
 func main() {

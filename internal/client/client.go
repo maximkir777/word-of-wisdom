@@ -17,7 +17,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/maximkir777/word_of_wisdom/pkg/protocol"
+	"github.com/maximkir777/word-of-wisdom/pkg/protocol"
 )
 
 // Client represents the TCP client that continuously sends requests.

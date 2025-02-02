@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/maximkir777/word_of_wisdom/internal/client"
-	"github.com/maximkir777/word_of_wisdom/internal/config"
+	"github.com/maximkir777/word-of-wisdom/internal/client"
+	"github.com/maximkir777/word-of-wisdom/internal/config"
 )
 
 func main() {

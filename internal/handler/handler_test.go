@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maximkir777/word_of_wisdom/pkg/protocol"
+	"github.com/maximkir777/word-of-wisdom/pkg/protocol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

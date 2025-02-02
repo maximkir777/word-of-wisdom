@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/maximkir777/word_of_wisdom/pkg/protocol"
+	"github.com/maximkir777/word-of-wisdom/pkg/protocol"
 )
 
 // ErrQuit is returned when the client requests to close the connection.
