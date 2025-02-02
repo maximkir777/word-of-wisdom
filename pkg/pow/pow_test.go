@@ -16,13 +16,11 @@ func TestPoW_ChallengeGeneration(t *testing.T) {
 	p := NewPoW(2, 5, 100, 5*time.Minute)
 	seed, challenge := p.GenerateChallenge()
 
-	// Test seed format
-	parts := strings.Split(seed, "|")
-	require.Len(t, parts, 2, "Seed should contain two parts")
+	parts := strings.Split(seed, ",")
+	require.Len(t, parts, 2, "Seed should contain two parts separated by a comma")
 	_, err := strconv.Atoi(parts[0])
 	assert.NoError(t, err, "First part of seed should be numeric")
 
-	// Test challenge format
 	_, err = strconv.Atoi(challenge)
 	assert.NoError(t, err, "Challenge should be numeric")
 	assert.Len(t, challenge, 2, "Challenge length should match base difficulty")
@@ -59,7 +57,7 @@ func TestPoW_DifficultyAdjustment(t *testing.T) {
 	}
 
 	// Force immediate adjustment
-	p.adjustDifficulty() //
+	p.adjustDifficulty()
 
 	t.Run("difficulty increases under load", func(t *testing.T) {
 		assert.GreaterOrEqual(t, p.currentDifficulty, 3, "Difficulty should increase under load")
@@ -78,7 +76,6 @@ func TestPoW_DifficultyAdjustment(t *testing.T) {
 func TestPoW_ConcurrentSafety(t *testing.T) {
 	p := NewPoW(5, 10, 100, 5*time.Minute)
 
-	// Run concurrent operations
 	for i := 0; i < 100; i++ {
 		go func() {
 			p.GenerateChallenge()
@@ -86,20 +83,21 @@ func TestPoW_ConcurrentSafety(t *testing.T) {
 			p.adjustDifficulty()
 		}()
 	}
-	// Test will fail if race conditions detected
 }
 
 func solvePoW(seed string) string {
-	parts := strings.Split(seed, "|")
+	parts := strings.Split(seed, ",")
 	if len(parts) != 2 {
 		return ""
 	}
-	difficulty, _ := strconv.Atoi(parts[0])
-
+	difficulty, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return ""
+	}
 	var proof int
 	for {
 		proofStr := strconv.Itoa(proof)
-		hash := sha256.Sum256([]byte(seed + proofStr))
+		hash := sha256.Sum256([]byte(seed + "|" + proofStr))
 		if fmt.Sprintf("%x", hash)[:difficulty] == fmt.Sprintf("%0*d", difficulty, 0) {
 			return proofStr
 		}

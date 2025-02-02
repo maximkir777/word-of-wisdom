@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/maximkir777/word_of_wisdom/pkg/protocol"
+	"io"
 	"log/slog"
 	"net"
 	"sync"
@@ -97,17 +98,19 @@ func (s *Server) handleConn(conn net.Conn) {
 		case <-s.ctx.Done():
 			return
 		default:
-			// Read message until newline character
 			msgStr, err := reader.ReadString('\n')
 			if err != nil {
-				s.logger.Warn("Error reading from connection", "client", clientAddr, "error", err)
+				if errors.Is(err, io.EOF) {
+					s.logger.Info("Connection closed by client", "client", clientAddr)
+				} else {
+					s.logger.Warn("Error reading from connection", "client", clientAddr, "error", err)
+				}
 				return
 			}
-			// Process the received message
+
 			msg, err := s.handler.ProcessRequest(s.ctx, msgStr, clientAddr)
 			if err != nil {
-				s.logger.Warn("Error processing request", "client", clientAddr, "error", err)
-				// Send error message to the client
+				s.logger.Warn("Processing error", "client", clientAddr, "error", err)
 				errMsg := protocol.Message{
 					Header:  protocol.ResponseResource,
 					Payload: "Error: " + err.Error(),
@@ -115,10 +118,10 @@ func (s *Server) handleConn(conn net.Conn) {
 				_ = s.sendMessage(errMsg, conn)
 				return
 			}
-			// Send the response message to the client
+
 			if msg != nil {
 				if err := s.sendMessage(*msg, conn); err != nil {
-					s.logger.Warn("Error sending message", "client", clientAddr, "error", err)
+					s.logger.Warn("Send error", "client", clientAddr, "error", err)
 					return
 				}
 			}

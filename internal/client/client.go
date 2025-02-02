@@ -57,7 +57,7 @@ func (c *Client) Run() {
 		default:
 		}
 
-		// Use crypto/rand to determine number of workers in range [5, 15]
+		// Use crypto/rand to determine number of workers (range 10 to 24).
 		n, err := rand.Int(rand.Reader, big.NewInt(15))
 		var numWorkers int
 		if err != nil {
@@ -72,7 +72,7 @@ func (c *Client) Run() {
 			wg.Add(1)
 			go func(workerID int) {
 				defer wg.Done()
-				if err := c.singleRequest(workerID); err != nil {
+				if err := c.singleRequest(ctx, workerID); err != nil {
 					log.Printf("Worker %d error: %v", workerID, err)
 				}
 			}(i)
@@ -89,8 +89,9 @@ func (c *Client) Run() {
 	}
 }
 
-// singleRequest performs one cycle of connection, PoW challenge request, solution and resource retrieval.
-func (c *Client) singleRequest(workerID int) error {
+// singleRequest performs one cycle of connection, POW challenge request, solution and resource retrieval.
+func (c *Client) singleRequest(ctx context.Context, workerID int) error {
+	// Dial with a timeout.
 	conn, err := net.DialTimeout("tcp", c.ServerAddress, c.Timeout)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
@@ -98,6 +99,11 @@ func (c *Client) singleRequest(workerID int) error {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
+
+	// Set a deadline for reading the challenge response.
+	if err := conn.SetDeadline(time.Now().Add(c.Timeout)); err != nil {
+		return fmt.Errorf("failed to set deadline: %w", err)
+	}
 
 	// Send RequestChallenge message.
 	challengeReq := &protocol.Message{
@@ -122,19 +128,37 @@ func (c *Client) singleRequest(workerID int) error {
 		return fmt.Errorf("unexpected response header: %d", challengeResp.Header)
 	}
 
+	// Split payload into two parts: fullSeed and challenge.
+	// Expected format: "<difficulty,randomNumber>|<challenge>"
 	parts := strings.SplitN(challengeResp.Payload, "|", 2)
 	if len(parts) != 2 {
 		return fmt.Errorf("invalid challenge payload: %s", challengeResp.Payload)
 	}
-	seed, challenge := parts[0], parts[1]
-	log.Printf("Worker %d: Received challenge (seed=%s, challenge=%s)", workerID, seed, challenge)
+	fullSeed := parts[0]  // e.g., "3,174644643503504791"
+	challenge := parts[1] // e.g., "000"
+	log.Printf("Worker %d: Received challenge (seed=%s, challenge=%s)", workerID, fullSeed, challenge)
 
-	// Solve PoW challenge.
-	proof := solvePoW(seed, challenge)
+	// Remove the deadline so that POW solving is not affected.
+	if err := conn.SetDeadline(time.Time{}); err != nil {
+		return fmt.Errorf("failed to reset deadline: %w", err)
+	}
+
+	// Create a timeout context for solving POW (e.g., 10 seconds).
+	powCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	proof, err := solvePoW(powCtx, fullSeed, challenge)
+	if err != nil {
+		return fmt.Errorf("failed to solve POW: %w", err)
+	}
 	log.Printf("Worker %d: Proof found: %s", workerID, proof)
 
+	// Set a new deadline for reading the resource response.
+	if err := conn.SetDeadline(time.Now().Add(c.Timeout)); err != nil {
+		return fmt.Errorf("failed to set deadline for resource response: %w", err)
+	}
+
 	// Send RequestResource message.
-	resourcePayload := fmt.Sprintf("%s|%s", seed, proof)
+	resourcePayload := fmt.Sprintf("%s|%s", fullSeed, proof)
 	resourceReq := &protocol.Message{
 		Header:  protocol.RequestResource,
 		Payload: resourcePayload,
@@ -160,15 +184,21 @@ func (c *Client) singleRequest(workerID int) error {
 	return nil
 }
 
-// solvePoW finds a proof such that sha256(seed+proof) starts with the challenge prefix.
-func solvePoW(seed, challenge string) string {
+// solvePoW finds a proof such that sha256(seed + "|" + proof) starts with the challenge prefix.
+// It respects the provided context timeout.
+func solvePoW(ctx context.Context, seed, challenge string) (string, error) {
 	var proof int64 = 0
 	for {
-		proofStr := strconv.FormatInt(proof, 10)
-		hash := fmt.Sprintf("%x", sha256.Sum256([]byte(seed+proofStr)))
-		if strings.HasPrefix(hash, challenge) {
-			return proofStr
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		default:
+			proofStr := strconv.FormatInt(proof, 10)
+			hash := fmt.Sprintf("%x", sha256.Sum256([]byte(seed+"|"+proofStr)))
+			if strings.HasPrefix(hash, challenge) {
+				return proofStr, nil
+			}
+			proof++
 		}
-		proof++
 	}
 }
