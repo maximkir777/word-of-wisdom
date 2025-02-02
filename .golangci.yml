@@ -1,0 +1,48 @@
+# See good examples here:
+# https://sourcegraph.com/github.com/palletone/go-palletone/-/blob/.golangci.yml
+# https://github.com/golangci/golangci-lint/blob/master/.golangci.example.yml
+
+linters:
+  disable-all: true
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - ineffassign
+    - typecheck
+    - bodyclose
+    - gosec
+    - unconvert
+    - dupl
+    - goconst
+    - gocyclo
+    - gocognit
+    - gofmt
+    - misspell
+    - dogsled
+    - nakedret
+    - prealloc
+    - gocritic
+    - funlen
+    - whitespace
+
+linters-settings:
+  funlen:
+    lines: 100
+    statements: 60
+
+issues:
+  exclude-files:
+    - "main.go"
+    - ".*_mock.go$"
+    - "internal/dto/multi_accounts_test.go"
+    - "internal/dto/players_test.go"
+  exclude-dirs:
+    - "api/swagger"
+    - "api/swagger-ui"
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - funlen
