@@ -10,7 +10,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/maximkir777/word_of_wisdom/pkg/protocol"
+	"github.com/maximkir777/word-of-wisdom/pkg/protocol"
 )
 
 // Handler defines the interface for processing incoming messages.
