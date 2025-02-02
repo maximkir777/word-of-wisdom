@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/maximkir777/word_of_wisdom/pkg/protocol"
 	"log/slog"
 	"strings"
+
+	"github.com/maximkir777/word_of_wisdom/pkg/protocol"
 )
 
 // ErrQuit is returned when the client requests to close the connection.
@@ -52,9 +53,9 @@ func (i *Impl) ProcessRequest(ctx context.Context, msgStr string, clientInfo str
 		case protocol.Quit:
 			return nil, ErrQuit
 		case protocol.RequestChallenge:
-			return i.requestChallenge(ctx, clientInfo)
+			return i.requestChallenge(clientInfo)
 		case protocol.RequestResource:
-			return i.requestResource(ctx, msg.Payload, clientInfo)
+			return i.requestResource(msg.Payload, clientInfo)
 		default:
 			return nil, fmt.Errorf("unknown message type")
 		}
@@ -62,7 +63,7 @@ func (i *Impl) ProcessRequest(ctx context.Context, msgStr string, clientInfo str
 }
 
 // requestChallenge generates a PoW challenge and returns it to the client.
-func (i *Impl) requestChallenge(ctx context.Context, clientInfo string) (*protocol.Message, error) {
+func (i *Impl) requestChallenge(clientInfo string) (*protocol.Message, error) {
 	slog.Info("Client requests challenge", "client", clientInfo)
 	seed, challenge := i.pow.GenerateChallenge()
 	msg := protocol.Message{
@@ -73,7 +74,7 @@ func (i *Impl) requestChallenge(ctx context.Context, clientInfo string) (*protoc
 }
 
 // requestResource verifies the PoW solution and returns a wise word if correct.
-func (i *Impl) requestResource(ctx context.Context, payload, clientInfo string) (*protocol.Message, error) {
+func (i *Impl) requestResource(payload, clientInfo string) (*protocol.Message, error) {
 	slog.Info("Client requests resource", "client", clientInfo)
 	parts := strings.Split(payload, "|")
 	if len(parts) != 2 {
