@@ -75,9 +75,9 @@ func (p *PoW) TrackRequest() {
 	p.loadWindow = append(p.loadWindow, time.Now().UTC())
 }
 
-// GenerateChallenge returns a seed and challenge.
-// The seed is formatted as "difficulty,randomNumber" (используя запятую как разделитель),
-// а challenge – это строка из нулей длины, равной текущей сложности.
+// GenerateChallenge returns a seed and a challenge.
+// The seed is formatted as "difficulty,randomNumber" (using a comma as a separator),
+// and the challenge is a string of zeros whose length is equal to the current difficulty.
 func (p *PoW) GenerateChallenge() (string, string) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()

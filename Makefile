@@ -47,6 +47,8 @@ lint:
 format:
 	@echo "Running go fmt..."
 	go fmt ./...
+	@echo "Running smartimports..."
+	smartimports -local .
 
 build-server:
 	@echo "Building server binary..."
@@ -62,6 +64,8 @@ install-bin-deps:
 	@echo "Installing binary dependencies..."
 	@echo "Installing golangci-lint..."
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@echo "Installing smartimports..."
+	go install github.com/pav5000/smartimports/cmd/smartimports@v0.2.0
 
 clean:
 	@echo "Cleaning built binaries..."

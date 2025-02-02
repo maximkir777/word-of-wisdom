@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/maximkir777/word_of_wisdom/internal/config"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/maximkir777/word_of_wisdom/internal/config"
 	"github.com/maximkir777/word_of_wisdom/internal/handler"
 	"github.com/maximkir777/word_of_wisdom/internal/server"
 	"github.com/maximkir777/word_of_wisdom/pkg/pow"
